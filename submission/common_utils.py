@@ -76,14 +76,14 @@ class EarlyStopper:
 
 class MLP(nn.Module):
 
-    def __init__(self, no_features, no_hidden, no_labels):
+    def __init__(self, no_features, no_hidden, no_labels, first_hidden = 128):
         super().__init__()
         self.mlp_stack = nn.Sequential(
             # YOUR CODE HERE
-            nn.Linear(no_features, no_hidden),
+            nn.Linear(no_features, first_hidden),
             nn.ReLU(),
             nn.Dropout(p=0.2),
-            nn.Linear(no_hidden, no_hidden),
+            nn.Linear(first_hidden, no_hidden),
             nn.ReLU(),
             nn.Dropout(p=0.2),
             nn.Linear(no_hidden, no_hidden),
@@ -109,3 +109,32 @@ class CustomDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 loss_fn = nn.CrossEntropyLoss()
+
+def generate_cv_folds_for_batch_sizes(parameters, X_train, y_train):
+    cv = KFold(n_splits=5, shuffle=True, random_state=0)
+    X_train_scaled_dict, X_val_scaled_dict, y_train_dict, y_val_dict = {}, {}, {}, {}
+    for batch_size in parameters:
+        X_train_scaled_dict[batch_size] = []
+        X_val_scaled_dict[batch_size] = []
+        y_train_dict[batch_size] = []
+        y_val_dict[batch_size] = []
+        for train_idx, test_idx in cv.split(X_train, y_train):
+            x_train_fold, y_train_fold = X_train[train_idx], y_train[train_idx]
+            
+            x_test_fold, y_test_fold = X_train[test_idx], y_train[test_idx]
+
+            x_train_fold_scale, x_test_fold_scale = preprocess_dataset(x_train_fold, x_test_fold)
+            
+            X_train_scaled_dict[batch_size].append(x_train_fold_scale)
+            X_val_scaled_dict[batch_size].append(x_test_fold_scale)
+            y_train_dict[batch_size].append(y_train_fold)
+            y_val_dict[batch_size].append(y_test_fold)
+    """
+    returns:
+    X_train_scaled_dict(dict) where X_train_scaled_dict[batch_size] is a list of the preprocessed training matrix for the different folds.
+    X_val_scaled_dict(dict) where X_val_scaled_dict[batch_size] is a list of the processed validation matrix for the different folds.
+    y_train_dict(dict) where y_train_dict[batch_size] is a list of labels for the different folds
+    y_val_dict(dict) where y_val_dict[batch_size] is a list of labels for the different folds
+    """
+    # YOUR CODE HERE
+    return X_train_scaled_dict, X_val_scaled_dict, y_train_dict, y_val_dict
