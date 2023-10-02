@@ -102,13 +102,13 @@ class CustomDataset(Dataset):
     # YOUR CODE HERE
     def __init__(self, X,y):
         self.X = torch.tensor(X, dtype=torch.float)
-        self.y = torch.tensor(y, dtype=torch.long)
+        self.y = torch.tensor(y, dtype=torch.float)
     def __len__(self):
         return len(self.y)
     def __getitem__(self,idx):
         return self.X[idx], self.y[idx]
 
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = nn.BCELoss()
 
 def generate_cv_folds_for_batch_sizes(parameters, X_train, y_train):
     cv = KFold(n_splits=5, shuffle=True, random_state=0)
